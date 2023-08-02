@@ -30,5 +30,6 @@ func main() {
 
 	api.POST("/users", userHandler.RegisterUser)
 	api.POST("/users/login", userHandler.LoginUser)
+	api.POST("/users/email-checkers", userHandler.CheckEmailAvailability)
 	router.Run()
 }
