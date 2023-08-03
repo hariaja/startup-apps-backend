@@ -3,6 +3,7 @@ package handlers
 import (
 	"fmt"
 	"net/http"
+	"startup-apps/auth"
 	"startup-apps/helper"
 	"startup-apps/users"
 
@@ -11,10 +12,11 @@ import (
 
 type userHanlder struct {
 	userService users.Service
+	authService auth.Service
 }
 
-func NewUserHandler(userService users.Service) *userHanlder {
-	return &userHanlder{userService}
+func NewUserHandler(userService users.Service, authService auth.Service) *userHanlder {
+	return &userHanlder{userService, authService}
 }
 
 func (h *userHanlder) RegisterUser(c *gin.Context)  {
@@ -31,14 +33,20 @@ func (h *userHanlder) RegisterUser(c *gin.Context)  {
 	}
 
 	newUser, err := h.userService.RegisterUser(input)
-
 	if err != nil {
 		response := helper.ResponseApi("Register Account Failed", http.StatusUnprocessableEntity, "error", nil)
 		c.JSON(http.StatusUnprocessableEntity, response)
 		return
 	}
 
-	formatter := users.FormatUser(newUser, "sfdjhjhkjhdKHKKhjkd63784627346923DSKJFHKAJSD")
+	token, err := h.authService.GenerateToken(newUser.Id)
+	if err != nil {
+		response := helper.ResponseApi("Register Account Failed", http.StatusUnprocessableEntity, "error", nil)
+		c.JSON(http.StatusUnprocessableEntity, response)
+		return
+	}
+
+	formatter := users.FormatUser(newUser, token)
 
 	response := helper.ResponseApi("Account Has Been Registered", http.StatusOK, "success", formatter)
 	c.JSON(http.StatusOK, response)
@@ -61,12 +69,19 @@ func (h *userHanlder) LoginUser(c *gin.Context) {
 	if err != nil {
 		errorMessage := gin.H{"errors": err.Error()}
 
-		response := helper.ResponseApi("Register Account Failed", http.StatusUnprocessableEntity, "error", errorMessage)
+		response := helper.ResponseApi("Login Failed", http.StatusUnprocessableEntity, "error", errorMessage)
 		c.JSON(http.StatusUnprocessableEntity, response)
 		return
 	}
 
-	formatter := users.FormatUser(loggedinUser, "kjshfjshdflhlsadjfhUHKLJHSJZ32SNm32e32mnDSAdsfhjhJKHjdsn")
+	token, err := h.authService.GenerateToken(loggedinUser.Id)
+	if err != nil {
+		response := helper.ResponseApi("Login Failed", http.StatusUnprocessableEntity, "error", nil)
+		c.JSON(http.StatusUnprocessableEntity, response)
+		return
+	}
+
+	formatter := users.FormatUser(loggedinUser, token)
 	response := helper.ResponseApi("Login Successfully", http.StatusOK, "success", formatter)
 	c.JSON(http.StatusOK, response)
 }
