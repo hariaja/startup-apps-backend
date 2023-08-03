@@ -28,7 +28,6 @@ func main() {
 	userRepository := users.NewRepository(db)
 	userService := users.NewService(userRepository)
 	authService := auth.NewService()
-
 	userHandler := handlers.NewUserHandler(userService, authService)
 
 	router := gin.Default()
